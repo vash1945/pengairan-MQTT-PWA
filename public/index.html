@@ -5,21 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Tandon Air</title>
     
-    <meta name="theme-color" content="#1a2a6c"/>
+    <meta name="theme-color" content="#0d47a1"/>
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/images/icon-192.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/id.js"></script>
   
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@700&display=swap');
         :root {
-            --primary-color: #3b82f6;
             --background-gradient-start: #0d47a1;
             --background-gradient-end: #1a2a6c;
         }
@@ -33,7 +30,6 @@
             justify-content: center;
             align-items: center;
             padding: 1rem;
-            overflow-x: hidden;
             color: #f1f5f9;
         }
         h1, h2, h3 { font-family: 'Roboto Condensed', sans-serif; font-weight: 700; }
@@ -55,13 +51,13 @@
     </style>
 </head>
 <body>
-    <div id="main-content" class="relative w-full max-w-6xl">
-        <header class="text-center mb-8 relative z-10">
-            <h1 class="text-3xl md:text-4xl font-bold text-white main-title mb-4">MONITORING TANDON AIR</h1>
-            <div id="connection-status" class="flex items-center justify-center text-sm">
+    <div id="main-content" class="relative w-full max-w-6xl mx-auto">
+        <header class="text-center mb-6 md:mb-8 relative z-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-white main-title">MONITORING TANDON AIR</h1>
+            <div id="connection-status" class="flex items-center justify-center text-sm mt-2">
                 <div id="connection-indicator" class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
                 <span id="connection-text" class="text-white mr-4">Menghubungkan...</span>
-                <span>Update Terakhir: <span id="last-update">-</span></span>
+                <span>Update: <span id="last-update">-</span></span>
             </div>
         </header>
 
@@ -89,16 +85,16 @@
                     <h2 class="text-xl font-bold text-white mb-4 flex items-center"><i class="fas fa-info-circle mr-2"></i> Status Sistem</h2>
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <span class="text-gray-300">Level Air:</span>
+                            <span class="text-gray-300">Estimasi Level:</span>
                             <div id="water-level" class="text-3xl font-bold text-white">0%</div>
                         </div>
                         <div>
-                            <span class="text-gray-300">Kondisi:</span>
+                            <span class="text-gray-300">Kondisi Air:</span>
                             <div id="water-status" class="text-2xl font-bold text-gray-400">Menunggu</div>
                         </div>
                     </div>
                     <div class="border-t border-white/10 pt-4">
-                        <h3 class="text-lg font-bold text-white mb-2">Detail Sensor</h3>
+                        <h3 class="text-lg font-bold text-white mb-2">Status Fisik Sensor</h3>
                         <div class="space-y-2 text-sm">
                             <div class="flex justify-between items-center"><span>Sensor Atas:</span> <span id="detail-sensor-atas" class="font-medium text-gray-400">...</span></div>
                             <div class="flex justify-between items-center"><span>Sensor Tengah:</span> <span id="detail-sensor-tengah" class="font-medium text-gray-400">...</span></div>
@@ -114,7 +110,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             moment.locale('id');
 
-            // --- DEFINISI ELEMEN ---
             const waterLevelEl = document.getElementById('water-level');
             const waterStatusEl = document.getElementById('water-status');
             const lastUpdateEl = document.getElementById('last-update');
@@ -133,7 +128,6 @@
             const connText = document.getElementById('connection-text');
             const statusCard = document.getElementById('status-card');
 
-            // --- KONEKSI WEBSOCKET ---
             function connectWebSocket() {
                 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                 const ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
@@ -155,28 +149,26 @@
                 ws.onerror = (error) => { ws.close(); };
             }
 
-            // --- FUNGSI UPDATE TAMPILAN (DENGAN LOGIKA KOREKSI) ---
             function updateAllUI(data) {
                 const { sensorAtas, sensorTengah, sensorBawah } = data;
                 let correctedLevel = 0;
-                let correctedStatus = "SEDANG";
-                
-                // Menghitung ulang level & status yang BENAR berdasarkan kondisi sensor
-                if (sensorAtas && sensorTengah && sensorBawah) {
+                let correctedStatus = "ERROR";
+
+                // === LOGIKA DIPERBAIKI SESUAI ATURAN BARU: `false` = TERENDAM ===
+                if (!sensorAtas && !sensorTengah && !sensorBawah) {
                     correctedLevel = 100;
                     correctedStatus = "PENUH";
-                } else if (!sensorAtas && !sensorTengah && sensorBawah) {
-                    correctedLevel = 33; // Hanya sensor bawah terendam
-                    correctedStatus = "SEDANG";
-                } else if (!sensorAtas && sensorTengah && sensorBawah) {
-                    correctedLevel = 66; // Sensor tengah dan bawah terendam
-                    correctedStatus = "SEDANG";
-                } else { // Semua sensor kering atau kondisi tidak valid
+                } else if (sensorAtas && !sensorTengah && !sensorBawah) {
+                    correctedLevel = 66;
+                    correctedStatus = "CUKUP";
+                } else if (sensorAtas && sensorTengah && !sensorBawah) {
+                    correctedLevel = 33;
+                    correctedStatus = "SEDIKIT";
+                } else if (sensorAtas && sensorTengah && sensorBawah) {
                     correctedLevel = 5;
                     correctedStatus = "HABIS";
                 }
 
-                // Update tampilan menggunakan data yang sudah dikoreksi
                 if (water) water.style.height = `${correctedLevel}%`;
                 if (waterLevelEl) waterLevelEl.textContent = `${correctedLevel}%`;
                 if (waterStatusEl) waterStatusEl.textContent = correctedStatus;
@@ -186,11 +178,10 @@
                     let cardGradient = "from-gray-900 to-gray-800";
                     if (correctedStatus === "HABIS") cardGradient = "from-red-900 to-red-700";
                     else if (correctedStatus === "PENUH") cardGradient = "from-green-900 to-green-700";
-                    else if (correctedStatus === "SEDANG") cardGradient = "from-blue-900 to-blue-700";
+                    else cardGradient = "from-blue-900 to-blue-700";
                     statusCard.className = `status-card rounded-2xl p-6 shadow-2xl ${cardGradient}`;
                 }
 
-                // Update visual sensor & detail teks (LOGIKA DIPASTIKAN BENAR)
                 updateSensorVisual(sensors.atas, detailSensors.atas, sensorAtas);
                 updateSensorVisual(sensors.tengah, detailSensors.tengah, sensorTengah);
                 updateSensorVisual(sensors.bawah, detailSensors.bawah, sensorBawah);
@@ -199,15 +190,17 @@
             function updateSensorVisual(element, detailElement, isActive) {
                 if (!element || !detailElement) return;
                 
-                // Update warna titik sensor
-                element.classList.toggle('active', isActive);
-                element.classList.toggle('inactive', !isActive);
+                // LOGIKA WARNA & TEKS DIPERBAIKI SESUAI ATURAN BARU: `false` = TERENDAM
+                const isSubmerged = !isActive; // `isActive` adalah data mentah (true=kering), kita balik jadi isSubmerged
 
-                // Update teks detail sensor
-                if (isActive) {
+                if (isSubmerged) {
+                    element.classList.add('active'); // `active` -> hijau
+                    element.classList.remove('inactive');
                     detailElement.textContent = "Terendam";
                     detailElement.className = "font-medium text-green-400";
                 } else {
+                    element.classList.add('inactive'); // `inactive` -> merah
+                    element.classList.remove('active');
                     detailElement.textContent = "Kering";
                     detailElement.className = "font-medium text-red-400";
                 }
