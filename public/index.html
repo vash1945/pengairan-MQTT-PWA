@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Tandon Air Dalwa 3</title>
+    <title>Monitoring Tandon Air</title>
 
     <meta name="theme-color" content="#1a2a6c"/>
     <link rel="manifest" href="/manifest.json">
@@ -45,15 +45,23 @@
         .sensor.active { background-color: #22c55e; box-shadow: 0 0 15px #22c55e; }
         .sensor.inactive { background-color: #ef4444; box-shadow: 0 0 15px #ef4444; }
         .status-card { transition: all 0.5s ease-in-out; }
+        .tank-container {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
     </style>
 </head>
 <body>
     <div id="main-content" class="relative w-full max-w-6xl">
         <header class="text-center mb-8 relative z-10">
-            <div class="flex justify-between items-center mb-4">
-                <div id="user-role" class="px-3 py-1 bg-blue-600 rounded-full text-sm font-medium">Guest</div>
+            <div class="grid grid-cols-3 items-center mb-4">
+                <div class="text-left">
+                    </div>
                 <h1 class="text-3xl md:text-4xl font-bold text-white main-title">MONITORING TANDON AIR</h1>
-                <div class="flex items-center">
+                <div class="flex items-center justify-end">
                     <div id="connection-status" class="flex items-center mr-4">
                         <div id="connection-indicator" class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
                         <span id="connection-text" class="text-white text-sm">Menghubungkan...</span>
@@ -64,7 +72,7 @@
         </header>
         <main class="flex flex-col lg:flex-row gap-8">
             <section class="relative w-full lg:w-1/2">
-                <div class="tank-container relative w-full h-[500px] mt-14 rounded-xl overflow-hidden shadow-lg">
+                <div class="tank-container relative w-full h-[500px] mt-14 rounded-xl overflow-hidden">
                     <div id="water" class="water absolute bottom-0 w-full z-0" style="height: 0%;"></div>
                     <div class="absolute bottom-[90%] left-4 flex items-center space-x-2 z-10">
                         <div id="sensor-atas" class="sensor w-5 h-5 rounded-full inactive"></div>
@@ -122,16 +130,12 @@
                     if (connIndicator) connIndicator.className = 'w-3 h-3 rounded-full bg-green-500 animate-pulse mr-2';
                     if (connText) connText.textContent = 'Terhubung';
                 };
-
                 ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
                         updateAllUI(data);
-                    } catch (e) {
-                        console.error("Gagal memproses data dari server:", e);
-                    }
+                    } catch (e) { console.error("Gagal memproses data dari server:", e); }
                 };
-
                 ws.onclose = () => {
                     if (connIndicator) connIndicator.className = 'w-3 h-3 rounded-full bg-red-500 mr-2';
                     if (connText) connText.textContent = 'Terputus';
@@ -141,27 +145,20 @@
             }
 
             function updateAllUI(data) {
-                // Ambil data sensor mentah sebagai sumber kebenaran
                 const { sensorAtas, sensorTengah, sensorBawah } = data;
-
-                // Deklarasikan variabel untuk menampung data yang sudah dikoreksi
                 let correctedLevel = 0;
                 let correctedStatus = "SEDANG";
 
-                // === LOGIKA KOREKSI DIMULAI DI SINI ===
-                // Tentukan level dan status yang benar berdasarkan kondisi sensor
-                if (sensorAtas && sensorTengah && sensorBawah) { // Jika semua sensor basah
+                if (sensorAtas && sensorTengah && sensorBawah) {
                     correctedLevel = 100;
                     correctedStatus = "PENUH";
-                } else if (!sensorAtas && !sensorTengah && !sensorBawah) { // Jika semua sensor kering
+                } else if (!sensorAtas && !sensorTengah && !sensorBawah) {
                     correctedLevel = 5;
                     correctedStatus = "HABIS";
-                } else { // Kondisi di antaranya
+                } else {
                     correctedLevel = 50;
-                    correctedStatus = "SEDANG";
                 }
 
-                // Update tampilan menggunakan data yang sudah dikoreksi
                 if (water) water.style.height = `${correctedLevel}%`;
                 if (waterLevelEl) waterLevelEl.textContent = `${correctedLevel}%`;
                 if (waterStatusEl) waterStatusEl.textContent = correctedStatus;
@@ -175,7 +172,6 @@
                     statusCard.className = `status-card rounded-2xl p-6 shadow-2xl ${cardGradient}`;
                 }
 
-                // Update visual sensor tetap menggunakan data sensor mentah
                 updateSensorVisual(sensors.atas, sensorAtas);
                 updateSensorVisual(sensors.tengah, sensorTengah);
                 updateSensorVisual(sensors.bawah, sensorBawah);
