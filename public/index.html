@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Tandon Air</title>
-    
+
     <meta name="theme-color" content="#0d47a1"/>
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/images/icon-192.png">
@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/id.js"></script>
-  
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@700&display=swap');
         :root {
@@ -173,7 +173,7 @@
                 if (waterLevelEl) waterLevelEl.textContent = `${correctedLevel}%`;
                 if (waterStatusEl) waterStatusEl.textContent = correctedStatus;
                 if (lastUpdateEl) lastUpdateEl.textContent = moment().format('LTS');
-                
+
                 if (statusCard) {
                     let cardGradient = "from-gray-900 to-gray-800";
                     if (correctedStatus === "HABIS") cardGradient = "from-red-900 to-red-700";
@@ -186,10 +186,10 @@
                 updateSensorVisual(sensors.tengah, detailSensors.tengah, sensorTengah);
                 updateSensorVisual(sensors.bawah, detailSensors.bawah, sensorBawah);
             }
-            
+
             function updateSensorVisual(element, detailElement, isActive) {
                 if (!element || !detailElement) return;
-                
+
                 // LOGIKA WARNA & TEKS DIPERBAIKI SESUAI ATURAN BARU: `false` = TERENDAM
                 const isSubmerged = !isActive; // `isActive` adalah data mentah (true=kering), kita balik jadi isSubmerged
 
@@ -205,7 +205,7 @@
                     detailElement.className = "font-medium text-red-400";
                 }
             }
-            
+
             connectWebSocket();
         });
     </script>
