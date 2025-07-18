@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoring Tandon Air Dalwa 3</title>
+
+  <meta name="theme-color" content="#1a2a6c"/>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="images/icon-192.png">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/id.js"></script>
+  <style>
+    /* (CSS dari kode Anda sebelumnya tetap di sini, tidak perlu diubah) */
+    :root { --background-gradient-end: #1a2a6c; }
+    body { background: linear-gradient(135deg, #0d47a1, var(--background-gradient-end)); /* ... sisanya sama */ }
+    /* ... (lanjutkan semua CSS dari kode sebelumnya) */
+  </style>
+</head>
+<body>
+  <div id="main-content" class="relative w-full max-w-6xl">
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        moment.locale('id');
+
+        // --- ELEMENTS ---
+        const waterLevelEl = document.getElementById('water-level');
+        const waterStatusEl = document.getElementById('water-status');
+        const lastUpdateEl = document.getElementById('last-update');
+        const water = document.getElementById('water');
+        const sensors = {
+            atas: document.getElementById('sensor-atas'),
+            tengah: document.getElementById('sensor-tengah'),
+            bawah: document.getElementById('sensor-bawah')
+        };
+        const connIndicator = document.getElementById('connection-indicator');
+        const connText = document.getElementById('connection-text');
+
+        // --- REAL-TIME LOGIC ---
+        function connectWebSocket() {
+             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+             const ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
+
+            ws.onopen = () => {
+                console.log('Terhubung ke server via WebSocket');
+                connIndicator.className = 'w-3 h-3 rounded-full bg-green-500 animate-pulse mr-2';
+                connText.textContent = 'Terhubung';
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('Data baru diterima:', data);
+                updateAllUI(data);
+            };
+
+            ws.onclose = () => {
+                console.log('Koneksi WebSocket terputus. Mencoba menghubungkan kembali...');
+                connIndicator.className = 'w-3 h-3 rounded-full bg-red-500 mr-2';
+                connText.textContent = 'Terputus';
+                setTimeout(connectWebSocket, 3000); // Coba lagi setelah 3 detik
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket Error:', error);
+                ws.close();
+            };
+        }
+
+        // --- UI UPDATE FUNCTIONS ---
+        function updateAllUI(data) {
+            const { level, status, sensorAtas, sensorTengah, sensorBawah } = data;
+
+            // Update Tampilan Utama
+            water.style.height = `${level}%`;
+            waterLevelEl.textContent = `${level}%`;
+            waterStatusEl.textContent = status;
+            lastUpdateEl.textContent = moment().format('LTS');
+
+            // Update Warna Status Card
+            let cardGradient;
+            if (status === "HABIS") cardGradient = "from-red-900 to-red-700";
+            else if (status === "PENUH") cardGradient = "from-green-900 to-green-700";
+            else cardGradient = "from-blue-900 to-blue-700";
+            document.getElementById('status-card').className = `status-card rounded-2xl p-6 shadow-2xl ${cardGradient}`;
+
+            // Update Sensor Visual
+            updateSensorVisual(sensors.atas, sensorAtas);
+            updateSensorVisual(sensors.tengah, sensorTengah);
+            updateSensorVisual(sensors.bawah, sensorBawah);
+
+            // Update Chart (jika diperlukan)
+            // ... (logika chart bisa ditambahkan di sini)
+        }
+
+        function updateSensorVisual(element, isActive) {
+            const wasActive = element.classList.contains('active');
+            if (isActive && !wasActive) {
+                element.classList.replace('inactive', 'active');
+            } else if (!isActive && wasActive) {
+                element.classList.replace('active', 'inactive');
+            }
+        }
+
+        // --- INITIALIZATION ---
+        // (Hilangkan bagian login & simulasi, langsung hubungkan)
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('main-content').classList.remove('hidden', 'opacity-0');
+        connectWebSocket();
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker terdaftar', reg))
+                .catch(err => console.error('Gagal mendaftarkan Service Worker', err));
+        }
+    });
+  </script>
+</body>
+</html>

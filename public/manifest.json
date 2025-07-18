@@ -1,0 +1,21 @@
+{
+  "name": "Monitoring Tandon Air",
+  "short_name": "TandonAir",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a2a6c",
+  "theme_color": "#0d47a1",
+  "description": "Aplikasi untuk memonitor level air tandon secara real-time.",
+  "icons": [
+    {
+      "src": "images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "dalwa3water",
+  "version": "1.0.0",
+  "description": "Backend for Dalwa Water Tank Monitoring",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.1.0",
+    "mqtt": "^5.13.2",
+    "ws": "^8.18.3"
+  }
+}
