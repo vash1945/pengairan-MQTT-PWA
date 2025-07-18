@@ -15,15 +15,64 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/id.js"></script>
+
   <style>
-    /* (CSS dari kode Anda sebelumnya tetap di sini, tidak perlu diubah) */
+    /* Seluruh kode CSS Anda dari sebelumnya diletakkan di sini */
     :root { --background-gradient-end: #1a2a6c; }
-    body { background: linear-gradient(135deg, #0d47a1, var(--background-gradient-end)); /* ... sisanya sama */ }
-    /* ... (lanjutkan semua CSS dari kode sebelumnya) */
+    body { background: linear-gradient(135deg, #0d47a1, var(--background-gradient-end)); /* ...dan seterusnya */ }
+    /* ... (CSS lengkap) ... */
   </style>
 </head>
 <body>
-  <div id="main-content" class="relative w-full max-w-6xl">
+
+  <div id="login-page" class="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
+    </div>
+
+  <div id="main-content" class="relative w-full max-w-6xl hidden opacity-0">
+    <header class="text-center mb-8 relative z-10">
+      <div class="flex justify-between items-center mb-4">
+        <div id="user-role" class="px-3 py-1 bg-blue-600 rounded-full text-sm font-medium"></div>
+        <h1 class="text-3xl md:text-4xl font-bold text-white main-title">MONITORING TANDON AIR DALWA 3</h1>
+        <div class="flex items-center">
+          <div id="connection-status" class="flex items-center mr-4">
+            <div id="connection-indicator" class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
+            <span id="connection-text" class="text-white text-sm">Menghubungkan...</span>
+          </div>
+          <div class="text-white text-sm">Update Terakhir: <span id="last-update"></span></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex flex-col lg:flex-row gap-8">
+        <section class="relative w-full lg:w-1/2">
+            <div class="tank-container relative w-full h-[500px] mt-14 rounded-xl overflow-hidden">
+              <div id="water" class="water absolute bottom-0 w-full z-0" style="height: 0%;"></div>
+
+              <div class="absolute bottom-[90%] left-4 flex items-center space-x-2 z-10">
+                <div id="sensor-atas" class="sensor w-5 h-5 rounded-full inactive"></div>
+                <span class="text-xs font-medium text-white bg-black/30 px-2 py-1 rounded">Sensor Atas</span>
+              </div>
+              <div class="absolute bottom-[50%] left-4 flex items-center space-x-2 z-10">
+                <div id="sensor-tengah" class="sensor w-5 h-5 rounded-full inactive"></div>
+                <span class="text-xs font-medium text-white bg-black/30 px-2 py-1 rounded">Sensor Tengah</span>
+              </div>
+              <div class="absolute bottom-[10%] left-4 flex items-center space-x-2 z-10">
+                <div id="sensor-bawah" class="sensor w-5 h-5 rounded-full inactive"></div>
+                <span class="text-xs font-medium text-white bg-black/30 px-2 py-1 rounded">Sensor Bawah</span>
+              </div>
+            </div>
+        </section>
+
+        <aside class="w-full lg:w-1/2 flex flex-col gap-6">
+            <div id="status-card" class="status-card bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 shadow-2xl">
+              <h2 class="text-xl font-bold text-white mb-4 flex items-center"><i class="fas fa-info-circle mr-2"></i> Status Sistem</h2>
+              <div class="grid grid-cols-2 gap-4">
+                <div><span class="text-gray-300">Level Air:</span><div id="water-level" class="text-3xl font-bold text-white">0%</div></div>
+                <div><span class="text-gray-300">Status:</span><div id="water-status" class="text-2xl font-bold text-gray-400">Menunggu Data</div></div>
+              </div>
+            </div>
+        </aside>
+    </main>
   </div>
 
   <script>
@@ -31,6 +80,8 @@
         moment.locale('id');
 
         // --- ELEMENTS ---
+        const loginPage = document.getElementById('login-page');
+        const mainContent = document.getElementById('main-content');
         const waterLevelEl = document.getElementById('water-level');
         const waterStatusEl = document.getElementById('water-status');
         const lastUpdateEl = document.getElementById('last-update');
@@ -42,11 +93,14 @@
         };
         const connIndicator = document.getElementById('connection-indicator');
         const connText = document.getElementById('connection-text');
+        const statusCard = document.getElementById('status-card');
+        const userRoleEl = document.getElementById('user-role');
+
 
         // --- REAL-TIME LOGIC ---
         function connectWebSocket() {
-             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-             const ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
 
             ws.onopen = () => {
                 console.log('Terhubung ke server via WebSocket');
@@ -85,21 +139,23 @@
 
             // Update Warna Status Card
             let cardGradient;
-            if (status === "HABIS") cardGradient = "from-red-900 to-red-700";
-            else if (status === "PENUH") cardGradient = "from-green-900 to-green-700";
-            else cardGradient = "from-blue-900 to-blue-700";
-            document.getElementById('status-card').className = `status-card rounded-2xl p-6 shadow-2xl ${cardGradient}`;
+            if (status === "HABIS") {
+                cardGradient = "from-red-900 to-red-700";
+            } else if (status === "PENUH") {
+                cardGradient = "from-green-900 to-green-700";
+            } else {
+                cardGradient = "from-blue-900 to-blue-700";
+            }
+            statusCard.className = `status-card rounded-2xl p-6 shadow-2xl ${cardGradient}`;
 
             // Update Sensor Visual
             updateSensorVisual(sensors.atas, sensorAtas);
             updateSensorVisual(sensors.tengah, sensorTengah);
             updateSensorVisual(sensors.bawah, sensorBawah);
-
-            // Update Chart (jika diperlukan)
-            // ... (logika chart bisa ditambahkan di sini)
         }
 
         function updateSensorVisual(element, isActive) {
+            if (!element) return; // Penjagaan jika elemen tidak ditemukan
             const wasActive = element.classList.contains('active');
             if (isActive && !wasActive) {
                 element.classList.replace('inactive', 'active');
@@ -109,16 +165,18 @@
         }
 
         // --- INITIALIZATION ---
-        // (Hilangkan bagian login & simulasi, langsung hubungkan)
-        document.getElementById('login-page').classList.add('hidden');
-        document.getElementById('main-content').classList.remove('hidden', 'opacity-0');
+        // Asumsi langsung masuk ke main content, hilangkan logika login
+        loginPage.style.display = 'none';
+        mainContent.classList.remove('hidden', 'opacity-0');
         connectWebSocket();
 
         // Register Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('Service Worker terdaftar', reg))
-                .catch(err => console.error('Gagal mendaftarkan Service Worker', err));
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker terdaftar', reg))
+                    .catch(err => console.error('Gagal mendaftarkan Service Worker', err));
+            });
         }
     });
   </script>
